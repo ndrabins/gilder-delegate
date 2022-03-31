@@ -19,6 +19,8 @@ import {
   WalletMultiButton,
 } from "@solana/wallet-adapter-react-ui";
 import { clusterApiUrl } from "@solana/web3.js";
+import { Delegate } from "./Delegate";
+import { Box } from "@mui/material/";
 
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
@@ -53,6 +55,7 @@ function App() {
           <WalletMultiButton />
           <WalletDisconnectButton />
           {/* Your app's components go here, nested within the context providers. */}
+          <Delegate />
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
