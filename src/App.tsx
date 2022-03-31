@@ -21,6 +21,9 @@ import {
 import { clusterApiUrl } from "@solana/web3.js";
 import { Delegate } from "./Delegate";
 import { Box } from "@mui/material/";
+import styled from "@emotion/styled";
+import Logo from "./GilderLogo.svg";
+import { ThemeProvider, useTheme, createTheme } from "@mui/material/styles";
 
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
@@ -48,18 +51,53 @@ function App() {
     [network]
   );
 
+  const theme = createTheme({
+    palette: {
+      mode: "dark",
+    },
+  });
+
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>
-          <WalletMultiButton />
-          <WalletDisconnectButton />
-          {/* Your app's components go here, nested within the context providers. */}
-          <Delegate />
-        </WalletModalProvider>
-      </WalletProvider>
-    </ConnectionProvider>
+    <ThemeProvider theme={theme}>
+      <ConnectionProvider endpoint={endpoint}>
+        <WalletProvider wallets={wallets}>
+          <WalletModalProvider>
+            <Container>
+              <LogoImg src={Logo} />
+              <ConnectButtonContainer>
+                <WalletMultiButton />
+              </ConnectButtonContainer>
+              {/* <ConnectButtonContainer>
+                <WalletDisconnectButton />
+              </ConnectButtonContainer> */}
+              <Delegate />
+            </Container>
+          </WalletModalProvider>
+        </WalletProvider>
+      </ConnectionProvider>
+    </ThemeProvider>
   );
 }
+const Container = styled.div`
+  background: linear-gradient(0.45turn, #27272a, #131313);
+  height: 100vh;
+  width: 100%;
+  /* justify-content: center; */
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+`;
+
+const ConnectButtonContainer = styled.div`
+  margin-left: 4px;
+  margin-right: 4px;
+  margin-bottom: 24px;
+`;
+
+const LogoImg = styled.img`
+  margin-top: 96px;
+  width: 400px;
+  margin-bottom: 24px;
+`;
 
 export default App;
