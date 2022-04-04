@@ -4,7 +4,11 @@ import {
   WalletProvider,
 } from "@solana/wallet-adapter-react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
-import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
+import {
+  getPhantomWallet,
+  getSlopeWallet,
+  getSolflareWallet,
+} from "@solana/wallet-adapter-wallets";
 import {
   WalletModalProvider,
   WalletDisconnectButton,
@@ -12,7 +16,6 @@ import {
 } from "@solana/wallet-adapter-react-ui";
 import { clusterApiUrl } from "@solana/web3.js";
 import { Delegate } from "./Delegate";
-import { Box } from "@mui/material/";
 import styled from "@emotion/styled";
 import Logo from "./GilderLogo.svg";
 import { ThemeProvider, useTheme, createTheme } from "@mui/material/styles";
@@ -30,7 +33,10 @@ function App() {
   // @solana/wallet-adapter-wallets includes all the adapters but supports tree shaking and lazy loading --
   // Only the wallets you configure here will be compiled into your application, and only the dependencies
   // of wallets that your users connect to will be loaded.
-  const wallets = useMemo(() => [new PhantomWalletAdapter()], [network]);
+  const wallets = useMemo(
+    () => [getPhantomWallet(), getSlopeWallet(), getSolflareWallet()],
+    [network]
+  );
 
   const theme = createTheme({
     palette: {
