@@ -79,6 +79,7 @@ export const Delegate = () => {
   const handleDelegate = async () => {
     const signers: Keypair[] = [];
     const instructions: TransactionInstruction[] = [];
+    if (!publicKey) throw new WalletNotConnectedError();
 
     try {
       // 1. Fetch all realms
@@ -112,13 +113,9 @@ export const Delegate = () => {
       });
 
       transaction.add(...instructions);
-      // transaction.sign(walletKeypair);
-
-      // const response = await sendAndConfirmTransaction(
-      //   connection,
-      //   transaction,
-      //   // [walletKeypair]
-      // );
+      transaction.feePayer = publicKey;
+      const signature = await sendTransaction(transaction, connection);
+      await connection.confirmTransaction(signature, "processed");
     } catch (error) {
       console.log("error", error);
     }
