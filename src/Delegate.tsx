@@ -17,7 +17,10 @@ import {
   TransactionInstruction,
   sendAndConfirmTransaction,
   Keypair,
+  SystemProgram,
 } from "@solana/web3.js";
+import { WalletNotConnectedError } from "@solana/wallet-adapter-base";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 
 const REALM_GOVERNANCE_PROGRAM_ID =
   "GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw";
@@ -32,13 +35,16 @@ const RPC_CONNECTION = "https://ssc-dao.genesysgo.net/";
 let connection = new Connection(RPC_CONNECTION, "confirmed");
 
 export const Delegate = () => {
-  // twitter wallet key
+  const { publicKey, sendTransaction } = useWallet();
+  // const { connection } = useConnection();
+
   const [delegatePublicKey, setDelegatePublicKey] = useState(
     "4warKVthQCTP1LmhKyJQHJGb1jvCUrzVnVhmA8pxE3Nt"
   );
   const [realms, setRealms] = useState([]);
   const [selectedRealm, setSelectedRealm] = useState<any>(null);
   const [tokenOwnerRecord, setTokenOwnerRecord] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchRealms = async () => {
@@ -59,12 +65,11 @@ export const Delegate = () => {
       );
 
       let tokenRecord = await getTokenOwnerRecord(connection, tokenAddress);
-      console.log("token address", tokenAddress);
-      console.log("token owner record", tokenRecord);
       // @ts-ignore
       setSelectedRealm(realmData);
       // @ts-ignore
       setTokenOwnerRecord(tokenRecord);
+      setIsLoading(false);
     };
 
     fetchRealms();
@@ -85,42 +90,41 @@ export const Delegate = () => {
 
       const programVersion = await getGovernanceProgramVersion(
         connection,
-        new PublicKey("GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw") // governance program public key
+        selectedRealm.owner // governance program public key
       );
-
-      // console.log("program version", programVersion);
-
-      // console.log("publicKey", publicKey);
-      console.log("Program Version", programVersion);
-      console.log("selectedRealm", selectedRealm);
-      console.log("tokenOwnerRecord", tokenOwnerRecord);
-      console.log("mint", selectedRealm.account.config.councilMint);
 
       withSetGovernanceDelegate(
         instructions,
-        REALM_GOVERNANCE_PKEY, // publicKey of program
+        selectedRealm.owner, // publicKey of program/programId
         programVersion, // program version of realm
-        selectedRealm.pubKey, // realm public key
+        selectedRealm.pubkey, // realm public key
         selectedRealm.account.config.councilMint, // mint of governance token
-        tokenOwnerRecord.owner, // publicKey of for tokenOwnerRecord of this wallet
-        new PublicKey("EVa7c7XBXeRqLnuisfkvpXSw5VtTNVM8MNVJjaSgWm4i"), // publicKey of connected wallet
+        tokenOwnerRecord.account.governingTokenOwner, // governingTokenOwner (walletId) publicKey of for tokenOwnerRecord of this wallet
+        tokenOwnerRecord.account.governingTokenOwner, // governanceAuthority: publicKey of connected wallet?
         new PublicKey(delegatePublicKey) // public key of wallet who to delegated vote to
       );
 
-      // withSetGovernanceDelegate(
-      //   // instructions,
-      //   // programId, // publicKey of program
-      //   // programVersion, // program version of realm
-      //   // realmId, // realm public key
-      //   // governingTokenMint, // mint of governance token
-      //   // tokenOwner,  // publicKey of for tokenOwnerRecord of this wallet
-      //   // governanceAuthority, // publicKey of connected wallet
-      //   // newTokenAuthority, // public key of wallet who to delegated vote to
-      // )
+      const recentBlockhash = await connection.getRecentBlockhash();
+
+      console.log("Instructions??", instructions);
+      const transaction = new Transaction({
+        recentBlockhash: recentBlockhash.blockhash,
+      });
+
+      transaction.add(...instructions);
+      // transaction.sign(walletKeypair);
+
+      // const response = await sendAndConfirmTransaction(
+      //   connection,
+      //   transaction,
+      //   // [walletKeypair]
+      // );
     } catch (error) {
       console.log("error", error);
     }
   };
+
+  console.log("selected Realm", selectedRealm);
 
   return (
     <Box
@@ -133,7 +137,7 @@ export const Delegate = () => {
         value={delegatePublicKey}
         onChange={(event) => setDelegatePublicKey(event.target.value)}
       />
-      <Button variant="contained" onClick={handleDelegate}>
+      <Button variant="contained" onClick={handleDelegate} disabled={isLoading}>
         Delegate to PublicKey
       </Button>
     </Box>
